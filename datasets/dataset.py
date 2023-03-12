@@ -3,9 +3,18 @@ File defines a dataset class for anomaly detection model.
 """
 
 from torch.utils.data import Dataset
+from torch.nn.functional import normalize
+
+import torch
 import pathlib
+import librosa
 import numpy as np
 import pickle
+
+MEL_MEAN = 0.003305966
+MEL_STD = 0.011990483
+DB_MEL_MEAN = -37.66361
+DB_MEL_STD = 11.218962
 
 class AnomalyDataset(Dataset):
     """
@@ -77,7 +86,7 @@ class AnomalyDataset(Dataset):
                                 self.files.append(self._load_file(normal_file))
                             else:
                                 self.files.append(normal_file)
-    
+
     def __len__(self):
         """Return the length of the dataset"""
         return len(self.files)
@@ -92,6 +101,11 @@ class AnomalyDataset(Dataset):
             the_item = self.files[item]
         else:
             the_item = self._load_file(self.files[item])
+
+        the_item['features'] = the_item['features'][:,:-1]
+
+        # Normalize the audio features
+        the_item['features'] = normalize(torch.tensor(the_item['features']))
 
         return the_item['features'], the_item['class']
 
